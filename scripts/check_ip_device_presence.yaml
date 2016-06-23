@@ -1,0 +1,12 @@
+domoticz:
+  host: http://192.168.0.91:8080
+  passcode: 20Gioele14
+devices:
+  - ip: 192.168.0.83
+    device_idx: 23
+    polling_interval: 11
+    awol_threshold: 23
+  - ip: 192.168.0.92
+    device_idx: 24
+    polling_interval: 5
+    awol_threshold: 12

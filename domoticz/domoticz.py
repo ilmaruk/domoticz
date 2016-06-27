@@ -35,3 +35,18 @@ def set_virtual_device_status(virtual_device_idx, status, domoticz_passcode=None
     response = requests.get("http://192.168.0.91:8080/json.htm",
                             params=params)
     response.raise_for_status()
+
+
+def json_api_request(**params):
+    response = requests.get("http://192.168.0.91:8080/json.htm", params=params)
+    response.raise_for_status()
+    return response
+
+
+def json_api_filter_parameters(params):
+    return {key: value for (key, value) in params.items() if value is not None}
+
+
+def json_api_get_all_devices(type='devices', filter='all', used=None, order='Name'):
+    params = dict(type=type, filter=filter, used=used, order=order)
+    response = json_api_request(**json_api_filter_parameters(params))

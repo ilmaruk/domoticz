@@ -1,28 +1,43 @@
 # -*- coding: utf-8 -*-
 import logging
+import ledcontroller
+import time
+
 from domoticz.json_api_client import JsonApiClient, DEVICE_STATUS_ON, DEVICE_STATUS_OFF
-from domoticz.milight_bridge import MiLightBridge, COLOR_RED
+
+LIGHTS_GROUP = 2
+INTERVALS = .15
+LOOPS = 3
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s:%(levelname)s:%(message)s')
 
 json_api_client = JsonApiClient('http://192.168.0.91:8080')
-milight_bridge = MiLightBridge('192.168.0.93', '8899')
+led_controller = ledcontroller.LedController('192.168.0.93')
 
-device_status = json_api_client.get_device_status(27)
-logging.info('Device status is: {status:s}'.format(status=device_status))
-
-alternate_command = getattr(milight_bridge, 'set_white') if device_status == DEVICE_STATUS_ON \
-    else getattr(milight_bridge, 'switch_off')
-for _ in range(1, 5):
-    logging.info('Setting color to Red')
-    milight_bridge.set_color(2, COLOR_RED, duration=.5, switch_on=device_status==DEVICE_STATUS_OFF)
-    logging.info('Re-setting color')
-    alternate_command(2, duration=.5)
+security_status = json_api_client.get_device_status(8)
+logging.info('Security status is: {status:s}'.format(status=security_status))
+if security_status == 'Arm Home':
+    logging.info('Nothing to do')
+flashing_color = 'green' if security_status == 'Normal' else 'red'
 
 device_status = json_api_client.get_device_status(27)
 logging.info('Device status is: {status:s}'.format(status=device_status))
 
 if device_status == DEVICE_STATUS_OFF:
-    milight_bridge.switch_off(2)
-else:
-    milight_bridge.set_white(2, switch_on=True)
+    led_controller.on(LIGHTS_GROUP)
+
+for _ in range(1, LOOPS+1):
+    led_controller.set_color(flashing_color, LIGHTS_GROUP)
+    time.sleep(INTERVALS)
+    if device_status == DEVICE_STATUS_OFF:
+        led_controller.off(LIGHTS_GROUP)
+    else:
+        led_controller.white(LIGHTS_GROUP)
+    time.sleep(INTERVALS)
+
+device_status = json_api_client.get_device_status(27)
+logging.info('Device status is: {status:s}'.format(status=device_status))
+
+led_controller.white(LIGHTS_GROUP)
+if device_status == DEVICE_STATUS_OFF:
+    led_controller.off(LIGHTS_GROUP)
